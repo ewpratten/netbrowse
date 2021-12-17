@@ -1,4 +1,3 @@
-#![doc = include_str!("../README.md")]
 #![deny(unsafe_code)]
 #![warn(
     clippy::all,
@@ -64,3 +63,21 @@
     nonstandard_style,
     rust_2018_idioms
 )]
+
+use colored::Colorize;
+mod ipc;
+
+fn main() {
+
+    // Check for avahi-browse on this system
+    if let Err(_) = which::which("avahi-browse") {
+        eprintln!("{}", "`avahi-browse` was not found in system $PATH".red());
+        std::process::exit(1);
+    }
+
+    // Spawn the subprocess
+    let subprocess = ipc::AvahiSubprocess::spawn();
+
+    loop{}
+
+}
