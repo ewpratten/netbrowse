@@ -6,7 +6,7 @@
 
 **NetBrowse** is a graphical frontend to [`avahi-browse`](https://linux.die.net/man/1/avahi-browse). This tool is used to quickly inspect a network for hosts that publicly expose their services.
 
-![A screenshot](./screenshot.png)
+![A screenshot](https://github.com/Ewpratten/netbrowse/raw/master/screenshot.png)
 
 *This screenshot was taken on a public network*
 
