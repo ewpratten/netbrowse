@@ -12,8 +12,7 @@
 
 ## Installation
 
-[![Get Appimage](https://raw.githubusercontent.com/srevinsaju/get-appimage/master/static/badges/get-appimage-branding-blue.png)]
-(https://github.com/Ewpratten/netbrowse/releases/latest)
+[![Get Appimage](https://raw.githubusercontent.com/srevinsaju/get-appimage/master/static/badges/get-appimage-branding-blue.png)](https://github.com/Ewpratten/netbrowse/releases/latest)
 
 This crate can also be installed via `cargo` with:
 
