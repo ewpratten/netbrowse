@@ -65,10 +65,12 @@
 )]
 
 use colored::Colorize;
+use eframe::{egui::Vec2, NativeOptions};
+use gui::BrowseApp;
+mod gui;
 mod ipc;
 
 fn main() {
-
     // Check for avahi-browse on this system
     if let Err(_) = which::which("avahi-browse") {
         eprintln!("{}", "`avahi-browse` was not found in system $PATH".red());
@@ -78,6 +80,9 @@ fn main() {
     // Spawn the subprocess
     let subprocess = ipc::AvahiSubprocess::spawn();
 
-    loop{}
-
+    // Build the egui app and run it
+    let app = BrowseApp::new(subprocess.packet_stream);
+    let mut options = NativeOptions::default();
+    options.initial_window_size = Some(Vec2::new(500.0, 800.0));
+    eframe::run_native(Box::new(app), options);
 }

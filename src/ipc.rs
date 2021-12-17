@@ -3,7 +3,9 @@
 use std::{
     convert::TryFrom,
     io::BufRead,
+    net::IpAddr,
     process::{Child, Stdio},
+    str::FromStr,
     sync::mpsc::{self, Receiver, Sender},
     thread::{self, JoinHandle},
 };
@@ -19,6 +21,10 @@ pub enum PacketParseError {
     IpTypeParseError(String),
     #[error("Ran out of arguments")]
     NotEnoughArgsError,
+    #[error(transparent)]
+    AddrParseError(#[from] std::net::AddrParseError),
+    #[error(transparent)]
+    IntParseError(#[from] std::num::ParseIntError),
 }
 
 /// Tries to unwrap a string from an arg iter, or just returns an error
@@ -71,6 +77,21 @@ impl TryFrom<String> for IpType {
     }
 }
 
+/// The metadat for a single service
+#[derive(Debug)]
+pub struct Service {
+    /// The name of the service
+    pub name: String,
+    /// The mDNS hostname of the service
+    pub hostname: String,
+    /// The IP address serving the service
+    pub ip: IpAddr,
+    /// The port the service is listening on
+    pub port: u16,
+    /// All additional data
+    pub data: Vec<String>,
+}
+
 /// An information packet parsed from a `avahi-browse` subprocess
 #[derive(Debug)]
 pub struct MdnsPacket {
@@ -86,8 +107,8 @@ pub struct MdnsPacket {
     pub service_type: String,
     /// The domain of the service
     pub domain: String,
-    /// Additional service metadata
-    pub metadata: Vec<String>,
+    /// The service defined in this packet
+    pub service: Option<Service>,
 }
 
 impl TryFrom<String> for MdnsPacket {
@@ -98,26 +119,52 @@ impl TryFrom<String> for MdnsPacket {
         // Convert the incoming data into an iter over its components
         let mut iter = s.split(';');
 
+        // Load the data before constructing the structure
+        // Grabs the first char of the first arg, and reads it as a mode
+        let mode = PacketMode::try_from(
+            try_unwrap_arg(iter.next())?
+                .chars()
+                .next()
+                .ok_or(PacketParseError::NotEnoughArgsError)?,
+        )?;
+        // Grabs the second arg, and reads it as an interface name
+        let interface_name = try_unwrap_arg(iter.next())?.to_string();
+        // Grabs the third arg, and reads it as an internet protocol type
+        let internet_protocol = IpType::try_from(try_unwrap_arg(iter.next())?.to_string())?;
+        // Grabs the fourth arg, and reads it as a hostname
+        let hostname = try_unwrap_arg(iter.next())?
+            .to_string()
+            .replace("\\.", ".")
+            .replace("\\0", " ");
+        // Grabs the fifth arg, and reads it as a service type
+        let service_type = try_unwrap_arg(iter.next())?.to_string();
+        // Grabs the sixth arg, and reads it as a domain
+        let domain = try_unwrap_arg(iter.next())?.to_string();
+
         Ok(Self {
-            // Grabs the first char of the first arg, and reads it as a mode
-            mode: PacketMode::try_from(
-                try_unwrap_arg(iter.next())?
-                    .chars()
-                    .next()
-                    .ok_or(PacketParseError::NotEnoughArgsError)?,
-            )?,
-            // Grabs the second arg, and reads it as an interface name
-            interface_name: try_unwrap_arg(iter.next())?.to_string(),
-            // Grabs the third arg, and reads it as an internet protocol type
-            internet_protocol: IpType::try_from(try_unwrap_arg(iter.next())?.to_string())?,
-            // Grabs the fourth arg, and reads it as a hostname
-            hostname: try_unwrap_arg(iter.next())?.to_string(),
-            // Grabs the fifth arg, and reads it as a service type
-            service_type: try_unwrap_arg(iter.next())?.to_string(),
-            // Grabs the sixth arg, and reads it as a domain
-            domain: try_unwrap_arg(iter.next())?.to_string(),
-            // Grabs the remaining args, and reads them as metadata
-            metadata: iter.map(|s| s.to_string()).collect(),
+            mode,
+            interface_name,
+            internet_protocol,
+            hostname,
+            service_type: service_type.clone(),
+            domain,
+            // Reads the remaining args as service data
+            // We do this by assuming there is a service, and turning any "no args" errors into a `None` value
+            service: match (|| -> Result<Service, PacketParseError> {
+                Ok(Service {
+                    name: service_type,
+                    hostname: try_unwrap_arg(iter.next())?.to_string(),
+                    ip: IpAddr::from_str(try_unwrap_arg(iter.next())?)?,
+                    port: u16::from_str(try_unwrap_arg(iter.next())?)?,
+                    data: iter.map(|s| s.to_string()).collect(),
+                })
+            })() {
+                Ok(s) => Some(s),
+                Err(e) => {
+                    // eprintln!("{}", e);
+                    None
+                }
+            },
         })
     }
 }
@@ -161,7 +208,7 @@ impl AvahiSubprocess {
                 match MdnsPacket::try_from(line.to_string()) {
                     Ok(packet) => {
                         // Send the packet to the main thread
-                        println!("{:?}", packet);
+                        // println!("{:?}", packet);
                         packet_sender
                             .send(packet)
                             .expect("Failed to send packet to main thread");
