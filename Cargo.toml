@@ -17,6 +17,6 @@ categories = []
 [dependencies]
 which = "4.2.2"
 colored = "2.0.0"
-eframe = "0.15.0"
+eframe = "0.18.0"
 ipnet = "2.3.1"
 thiserror = "1.0.30"
