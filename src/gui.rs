@@ -118,24 +118,32 @@ impl epi::App for BrowseApp {
                     // Render each host
                     for host in hosts.values() {
                         // Render the packet data
-                        egui::CollapsingHeader::new(&host.name).show(ui, |ui| {
-                            // Render every service name as a dropdown
-                            for service_name in host.services.keys() {
-                                egui::CollapsingHeader::new(service_name).show(ui, |ui| {
-                                    // Render provider for the service as its own dropdown, containing optional metadata
-                                    for service in host.services.get(service_name).unwrap() {
-                                        egui::CollapsingHeader::new(format!(
-                                            "{} (IP: {} Port: {})",
-                                            service.hostname, service.ip, service.port
+                        egui::CollapsingHeader::new(&host.name)
+                            .id_source(format!("{}_{}", interface, &host.name))
+                            .show(ui, |ui| {
+                                // Render every service name as a dropdown
+                                for service_name in host.services.keys() {
+                                    egui::CollapsingHeader::new(service_name)
+                                        .id_source(format!(
+                                            "{}_{}_{}",
+                                            interface, &host.name, service_name
                                         ))
                                         .show(ui, |ui| {
-                                            // Render the metadata
-                                            ui.label(service.data.join("\n"));
+                                            // Render provider for the service as its own dropdown, containing optional metadata
+                                            for service in host.services.get(service_name).unwrap()
+                                            {
+                                                egui::CollapsingHeader::new(format!(
+                                                    "{} (IP: {} Port: {})",
+                                                    service.hostname, service.ip, service.port
+                                                ))
+                                                .show(ui, |ui| {
+                                                    // Render the metadata
+                                                    ui.label(service.data.join("\n"));
+                                                });
+                                            }
                                         });
-                                    }
-                                });
-                            }
-                        });
+                                }
+                            });
                     }
                 }
             });

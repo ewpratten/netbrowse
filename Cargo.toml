@@ -1,6 +1,6 @@
 [package]
 name = "netbrowse"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Evan Pratten <ewpratten@gmail.com>"]
 edition = "2018"
 description = "A graphical frontend to avahi-browse"
@@ -20,3 +20,11 @@ colored = "2.0.0"
 eframe = "0.15.0"
 ipnet = "2.3.1"
 thiserror = "1.0.30"
+[package.metadata.rpm]
+package = "netbrowse"
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+netbrowse = { path = "/usr/bin/netbrowse" }
