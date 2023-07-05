@@ -12,10 +12,14 @@
 
 ## Installation
 
-[![Get Appimage](https://raw.githubusercontent.com/srevinsaju/get-appimage/master/static/badges/get-appimage-branding-blue.png)](https://github.com/Ewpratten/netbrowse/releases/latest)
+**Fedora:**
 
-This crate can also be installed via `cargo` with:
+```bash
+sudo dnf install --refresh netbrowse
+```
 
-```sh
+**All other OSes:**
+
+```bash
 cargo install netbrowse
 ```
