@@ -15,6 +15,10 @@
 **Fedora:**
 
 ```bash
+# Add my software repository
+sudo dnf config-manager --add-repo https://dist.ewpratten.com/linux/fedora/ewpratten.repo
+
+# Install netbrowse
 sudo dnf install --refresh netbrowse
 ```
 
